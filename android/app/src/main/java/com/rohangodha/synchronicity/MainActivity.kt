@@ -1,8 +1,8 @@
 package com.rohangodha.synchronicity
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -18,9 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,9 +28,14 @@ import androidx.navigation.navArgument
 import com.rohangodha.synchronicity.ui.theme.SynchronicityTheme
 
 class MainActivity : ComponentActivity() {
+    var token: String? = null
+    lateinit var navController: NavHostController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        token = getTokenFromPrefs()
 
         Log.i("MainActivity", "HELLO???");
         setContent {
@@ -42,10 +46,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        App(getToken())
-                        Button(onClick = { println(getToken()) }) {
-                            Text(text = "print token")
-                        }
+                        App()
                     }
                 }
             }
@@ -60,14 +61,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("ApplySharedPref")
     fun storeToken(token: String) {
+        println("storing token $token")
         val prefs = this.getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val edit = prefs.edit();
         edit.putString("token", token);
-        edit.apply()
+        edit.commit()
+        this.token = token
     }
 
-    fun getToken(): String? {
+    @SuppressLint("ApplySharedPref")
+    fun deleteToken() {
+        val prefs = this.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val edit = prefs.edit()
+        edit.remove("token")
+        edit.commit()
+        this.token = null
+        println(getTokenFromPrefs())
+        println(this.token)
+    }
+
+    fun getTokenFromPrefs(): String? {
+        println("getting token!")
         val token = getSharedPreferences("prefs", Context.MODE_PRIVATE).getString("token", "")
         if (token == "") {
             return null
@@ -75,32 +91,68 @@ class MainActivity : ComponentActivity() {
             return token
         }
     }
-}
 
-@Composable
-fun App(token: String?) {
-    val navController = rememberNavController()
+    @Composable
+    fun App() {
+        navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Screen.Home.route) {
-        composable(Screen.Home.route) {
-            HomeScreen(token = token, navController = navController)
-        }
-        composable(Screen.LogIn.route) {
-            LogInScreen()
-        }
-
-        composable(
-            route = Screen.Playlist.route,
-            arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val playlistId = backStackEntry.arguments?.getString("playlistId")
-            if (playlistId != null) {
-                PlaylistScreen(playlistId = playlistId)
+        NavHost(navController = navController, startDestination = Screen.LogIn.route) {
+            composable(Screen.Home.route) {
+                HomeScreen(navController = navController)
+            }
+            composable(Screen.LogIn.route) {
+                LogInScreen(navController = navController)
             }
 
+            composable(
+                route = Screen.Playlist.route,
+                arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val playlistId = backStackEntry.arguments?.getString("playlistId")
+                if (playlistId != null) {
+                    PlaylistScreen(playlistId = playlistId)
+                }
+
+            }
+        }
+    }
+
+    @Composable
+    fun PlaylistScreen(playlistId: String) {
+        Text(text = "Playlist screen for playlist w/ ID $playlistId")
+    }
+
+    @Composable
+    fun HomeScreen(navController: NavController) {
+        if (token == null) {
+            println("at home screen, token is $token, so we're going to login")
+            return navController.navigate("login")
+        }
+        Column {
+            Text(text = "Logged In! token: $token")
+            Button(onClick = {
+                deleteToken()
+                navController.navigate("home")
+            }) {
+                Text(text = "Log out")
+            }
+        }
+    }
+
+    @Composable
+    fun LogInScreen(navController: NavController) {
+        if (token != null) {
+            println("at login screen, token is $token, so we're going to home screen")
+            return navController.navigate("home")
+        }
+        val context = LocalContext.current
+
+        Button(onClick = { startAuth(context) }) {
+            Text(text = "Login with Spotify")
         }
     }
 }
+
 
 fun startAuth(context: Context) {
     Log.i("MainActivity", "trying to go to url??");
@@ -120,28 +172,6 @@ fun handleDeepLink(intent: Intent?): String? {
         }
     }
     return null
-}
-
-@Composable
-fun PlaylistScreen(playlistId: String) {
-   Text(text = "Playlist screen for playlist w/ ID $playlistId")
-}
-
-@Composable
-fun HomeScreen(token: String?, navController: NavController) {
-    if (token == null) {
-        return navController.navigate("login")
-    }
-    Text(text = "Logged In! token: $token")
-}
-
-@Composable
-fun LogInScreen() {
-    val context = LocalContext.current
-
-    Button(onClick = { startAuth(context) }) {
-        Text(text = "Login with Spotify")
-    }
 }
 
 sealed class Screen(val route: String) {
