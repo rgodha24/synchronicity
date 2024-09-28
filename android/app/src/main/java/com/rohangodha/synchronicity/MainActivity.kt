@@ -85,15 +85,18 @@ class MainActivity : ComponentActivity() {
     fun App() {
         navController = rememberNavController()
 
-        NavHost(navController = navController, startDestination = if (token != null) Screen.Home.route else Screen.LogIn.route) {
-            composable(Screen.Home.route) {
+        NavHost(
+            navController = navController,
+            startDestination = if (token != null) Screen.HomeScreen.route else Screen.LogInScreen.route
+        ) {
+            composable(Screen.HomeScreen.route) {
                 HomeScreen(navController = navController)
             }
-            composable(Screen.LogIn.route) {
+            composable(Screen.LogInScreen.route) {
                 LogInScreen(navController = navController)
             }
             composable(
-                route = Screen.Playlist.route,
+                route = Screen.PlaylistScreen.route,
                 arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val playlistId = backStackEntry.arguments?.getString("playlistId")
@@ -113,8 +116,8 @@ class MainActivity : ComponentActivity() {
     fun HomeScreen(navController: NavController) {
         LaunchedEffect(token) {
             if (token == null) {
-                navController.navigate(Screen.LogIn.route) {
-                    popUpTo(Screen.Home.route) { inclusive = true }
+                navController.navigate(Screen.LogInScreen.route) {
+                    popUpTo(Screen.HomeScreen.route) { inclusive = true }
                 }
             }
         }
@@ -133,8 +136,8 @@ class MainActivity : ComponentActivity() {
     fun LogInScreen(navController: NavController) {
         LaunchedEffect(token) {
             if (token != null) {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.LogIn.route) { inclusive = true }
+                navController.navigate(Screen.HomeScreen.route) {
+                    popUpTo(Screen.LogInScreen.route) { inclusive = true }
                 }
             }
         }
@@ -165,7 +168,7 @@ fun handleDeepLink(intent: Intent?): String? {
 }
 
 sealed class Screen(val route: String) {
-    data object Home : Screen("home")
-    data object LogIn : Screen("login")
-    data object Playlist : Screen("playlist/{playlistId}")
+    data object HomeScreen : Screen("home")
+    data object LogInScreen : Screen("login")
+    data object PlaylistScreen : Screen("playlist/{playlistId}")
 }
