@@ -70,9 +70,11 @@ dependencies {
     // this wavebeans thing's dependencies just KEEP GOING
     implementation(libs.wavebeans.exe)
     implementation(libs.wavebeans.lib)
-    implementation(libs.wavebeans.metrics)
-    implementation(libs.wavebeans.fs)
-    implementation(libs.kotlin.logging.jvm)
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlin.reflect)
+//    uncomment when running WaveBeansTest.kt
+//    implementation(libs.wavebeans.metrics)
+//    implementation(libs.wavebeans.fs)
+//    implementation(libs.kotlin.logging.jvm)
+//    implementation(libs.kotlinx.serialization.core)
+//    implementation(libs.kotlin.reflect)
+//    implementation(libs.androidx.browser)
 }
