@@ -16,6 +16,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
@@ -26,10 +28,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.rohangodha.synchronicity.ui.theme.SynchronicityTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 class MainActivity : ComponentActivity() {
-    var token: String? = null
-    lateinit var navController: NavHostController
+    private var token: String? by mutableStateOf(null)
+    private lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +41,6 @@ class MainActivity : ComponentActivity() {
 
         token = getTokenFromPrefs()
 
-        Log.i("MainActivity", "HELLO???");
         setContent {
             SynchronicityTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -54,56 +57,41 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onNewIntent(intent: Intent) {
-        println("new intent")
         super.onNewIntent(intent)
-        handleDeepLink(intent)?.let { token ->
-            storeToken(token)
+        handleDeepLink(intent)?.let { newToken ->
+            storeToken(newToken)
         }
     }
 
     @SuppressLint("ApplySharedPref")
-    fun storeToken(token: String) {
-        println("storing token $token")
-        val prefs = this.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val edit = prefs.edit();
-        edit.putString("token", token);
-        edit.commit()
-        this.token = token
+    private fun storeToken(newToken: String) {
+        val prefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("token", newToken).commit()
+        token = newToken
     }
 
     @SuppressLint("ApplySharedPref")
-    fun deleteToken() {
-        val prefs = this.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val edit = prefs.edit()
-        edit.remove("token")
-        edit.commit()
-        this.token = null
-        println(getTokenFromPrefs())
-        println(this.token)
+    private fun deleteToken() {
+        val prefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        prefs.edit().remove("token").commit()
+        token = null
     }
 
-    fun getTokenFromPrefs(): String? {
-        println("getting token!")
-        val token = getSharedPreferences("prefs", Context.MODE_PRIVATE).getString("token", "")
-        if (token == "") {
-            return null
-        } else {
-            return token
-        }
+    private fun getTokenFromPrefs(): String? {
+        return getSharedPreferences("prefs", Context.MODE_PRIVATE).getString("token", null)
     }
 
     @Composable
     fun App() {
         navController = rememberNavController()
 
-        NavHost(navController = navController, startDestination = Screen.LogIn.route) {
+        NavHost(navController = navController, startDestination = if (token != null) Screen.Home.route else Screen.LogIn.route) {
             composable(Screen.Home.route) {
                 HomeScreen(navController = navController)
             }
             composable(Screen.LogIn.route) {
                 LogInScreen(navController = navController)
             }
-
             composable(
                 route = Screen.Playlist.route,
                 arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
@@ -112,7 +100,6 @@ class MainActivity : ComponentActivity() {
                 if (playlistId != null) {
                     PlaylistScreen(playlistId = playlistId)
                 }
-
             }
         }
     }
@@ -124,15 +111,18 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun HomeScreen(navController: NavController) {
-        if (token == null) {
-            println("at home screen, token is $token, so we're going to login")
-            return navController.navigate("login")
+        LaunchedEffect(token) {
+            if (token == null) {
+                navController.navigate(Screen.LogIn.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
         }
+
         Column {
             Text(text = "Logged In! token: $token")
             Button(onClick = {
                 deleteToken()
-                navController.navigate("home")
             }) {
                 Text(text = "Log out")
             }
@@ -141,10 +131,14 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun LogInScreen(navController: NavController) {
-        if (token != null) {
-            println("at login screen, token is $token, so we're going to home screen")
-            return navController.navigate("home")
+        LaunchedEffect(token) {
+            if (token != null) {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.LogIn.route) { inclusive = true }
+                }
+            }
         }
+
         val context = LocalContext.current
 
         Button(onClick = { startAuth(context) }) {
@@ -153,13 +147,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 fun startAuth(context: Context) {
-    Log.i("MainActivity", "trying to go to url??");
-    println("trying to start context??")
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://10.0.2.2:3000/auth/login"))
     context.startActivity(intent)
-
 }
 
 fun handleDeepLink(intent: Intent?): String? {
