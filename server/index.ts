@@ -50,7 +50,7 @@ app.get("/authed/playlist", async (c) => {
       `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(search)}&type=video&key=${process.env.GOOGLE_KEY}`,
     );
     const data = await response.json();
-    const youtubeId = data.items[0].snippet.id.videoId;
+    const youtubeId = data.items[0].id.videoId;
     return youtubeId;
   };
 
@@ -67,24 +67,35 @@ app.get("/authed/playlist", async (c) => {
         downloadMode: "audio",
       }),
     });
+    console.log(download);
     return download;
   };
-
+  let i = 0;
   for (const playlist of playlistsItems) {
+    if (i == 1){
+      break;
+    }
     const playlistId = playlist.id;
     const trackList = await API.playlists.getPlaylistItems(playlistId);
     playlist_fields.push({
       name: playlist.name,
-      cover: playlist.images,
-      songs: playlist.tracks.items.map((track) => track.track.name),
+      cover: playlist.images
     });
-
+    let j = 0;
     for (let song of trackList.items) {
+      if (j == 1){
+        break;
+      }
       const search = `${song.track.name} by ${song.track.artists.map((artist) => artist.name).join(", ")}`;
       const youtubeUrl = `youtube.com/watch?v=${await searchYoutube(search)}`;
+      console.log(`urls: ${youtubeUrl}`);
       const download = (await downloadVideo(youtubeUrl)).url;
       songLinks.push(download);
+      j+= 1;
     }
+
+    console.log(songLinks);
+    i = i+1;
   }
 
   return c.json({ authed: true });
