@@ -35,11 +35,13 @@ app.get("/authed/playlist", async (c) => {
   const API = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID!, {
     access_token: user.spotify_token,
     refresh_token: user.spotify_refresh_token,
-    expires_in: user.spotify_token_iat.getTime(),
+    expires_in:
+      (user.spotify_token_iat.getTime() - new Date().getTime()) * 1000,
     token_type: "Bearer",
   });
 
   const playlists = await API.playlists.getUsersPlaylists(user.spotify_id);
+  console.log(playlists.total);
   const playlistsItems = playlists.items;
   const playlist_fields: any[] = [];
   const songLinks = [];
