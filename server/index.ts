@@ -3,15 +3,31 @@ import { connectToMongo, Users } from "./db";
 import { generateState, OAuth2RequestError } from "arctic";
 import { spotify } from "./auth";
 import { getCookie, setCookie } from "hono/cookie";
-import { sign } from "hono/jwt";
+import { jwt, sign, type JwtVariables } from "hono/jwt";
 
 await connectToMongo();
 
 console.log("connected to mongo");
 
-const app = new Hono();
+type Variables = JwtVariables<{ id: string; exp: number }>;
+
+const app = new Hono<{ Variables: Variables }>();
 
 app.get("/", (c) => c.text("Hono!"));
+
+app.use(
+  "/authed/*",
+  jwt({
+    secret: process.env.JWT_SECRET!,
+  }),
+);
+
+app.get("/authed/playlist", async (c) => {
+  const payload = c.get("jwtPayload");
+  console.log(payload);
+
+  return c.json({ authed: true });
+});
 
 app.get("/auth/login", async (c) => {
   const state = generateState();
@@ -105,4 +121,3 @@ app.get("/auth/callback", async (c) => {
 });
 
 export default app;
-
