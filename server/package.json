@@ -9,6 +9,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "arctic": "^1.9.2",
     "hono": "^4.6.3",
     "mongoose": "^8.7.0"
   }

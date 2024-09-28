@@ -22,14 +22,12 @@ process.on("SIGINT", async () => {
   process.exit();
 });
 
-const users = new Schema({
-  spotify_id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-});
-
-const sessions = new Schema({
-  user: { type: Types.ObjectId, ref: "User", required: true },
-  expires_at: { type: Number, required: true },
+const users = new mongoose.Schema({
+  display_name: { type: String, required: true },
+  spotify_id: { type: String, required: true },
+  spotify_token: { type: String, required: true },
+  spotify_refresh_token: { type: String, required: true },
+  spotify_token_iat: { type: Date, required: true },
 });
 
 const playlists = new Schema({
@@ -43,9 +41,8 @@ const songs = new Schema({
   playlist: { type: Types.ObjectId, ref: "Playlist" },
 });
 
-export const User = model("User", users);
-export const Sessions = model("Sessions", sessions);
-export const Playlists = model("Playlists", playlists);
-export const Songs = model("Songs", songs);
+export const Users = model("User", users);
+export const Playlists = model("Playlist", playlists);
+export const Songs = model("Song", songs);
 
 export const { disconnect } = mongoose;
