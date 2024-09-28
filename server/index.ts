@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { connectToMongo, Users } from "./db";
+import { connectToMongo, Playlists, Users } from "./db";
 import { generateState, OAuth2RequestError, Spotify } from "arctic";
 import { spotify } from "./auth";
 import { getCookie, setCookie } from "hono/cookie";
@@ -32,17 +32,8 @@ app.get("/authed/playlist", async (c) => {
     return c.body(null, 400);
   }
 
-  const API = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID!, {
-    access_token: user.spotify_token,
-    refresh_token: user.spotify_refresh_token,
-    expires_in:
-      (user.spotify_token_iat.getTime() - new Date().getTime()) * 1000,
-    token_type: "Bearer",
-  });
-
-  const playlists = await API.playlists.getUsersPlaylists(user.spotify_id);
-  console.log(playlists.total);
-  const playlistsItems = playlists.items;
+  
+  /*const playlistsItems = playlists.items;
   const playlist_fields: any[] = [];
   const songLinks = [];
   const searchYoutube = async (search: string) => {
@@ -96,7 +87,7 @@ app.get("/authed/playlist", async (c) => {
 
     console.log(songLinks);
     i = i+1;
-  }
+  }*/
 
   return c.json({ authed: true });
 });
@@ -166,6 +157,22 @@ app.get("/auth/callback", async (c) => {
       spotify_refresh_token: tokens.refreshToken,
       spotify_token_iat: tokens.accessTokenExpiresAt,
     });
+
+    const API = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID!, {
+      access_token: user.spotify_token,
+      refresh_token: user.spotify_refresh_token,
+      expires_in:
+        (user.spotify_token_iat.getTime() - new Date().getTime()) * 1000,
+      token_type: "Bearer",
+    });
+  
+    const playlists = await API.playlists.getUsersPlaylists(user.spotify_id);
+    console.log(playlists.total);
+
+    for (const playlist of playlists.items){
+      const p = new Playlists({user: user._id, name: playlist.name, imgUrl: playlist.images[0]});
+      await p.save();
+    }
 
     const token = await sign(
       {
