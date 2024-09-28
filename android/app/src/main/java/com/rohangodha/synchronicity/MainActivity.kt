@@ -1,8 +1,8 @@
 package com.rohangodha.synchronicity
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -16,18 +16,31 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.rohangodha.synchronicity.ui.theme.SynchronicityTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 class MainActivity : ComponentActivity() {
+    private var token: String? by mutableStateOf(null)
+    private lateinit var navController: NavHostController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        Log.i("MainActivity", "HELLO???");
+        token = getTokenFromPrefs()
+
         setContent {
             SynchronicityTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -36,10 +49,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        App(getToken())
-                        Button(onClick = { println(getToken()) }) {
-                            Text(text = "print token")
-                        }
+                        App()
                     }
                 }
             }
@@ -47,48 +57,99 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onNewIntent(intent: Intent) {
-        println("new intent")
         super.onNewIntent(intent)
-        handleDeepLink(intent)?.let { token ->
-            storeToken(token)
+        handleDeepLink(intent)?.let { newToken ->
+            storeToken(newToken)
         }
     }
 
-    fun storeToken(token: String) {
-        val prefs = this.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        val edit = prefs.edit();
-        edit.putString("token", token);
-        edit.apply()
+    @SuppressLint("ApplySharedPref")
+    private fun storeToken(newToken: String) {
+        val prefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("token", newToken).commit()
+        token = newToken
     }
 
-    fun getToken(): String? {
-        val token = getSharedPreferences("prefs", Context.MODE_PRIVATE).getString("token", "")
-        if (token == "") {
-            return null
-        } else {
-            return token
+    @SuppressLint("ApplySharedPref")
+    private fun deleteToken() {
+        val prefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        prefs.edit().remove("token").commit()
+        token = null
+    }
+
+    private fun getTokenFromPrefs(): String? {
+        return getSharedPreferences("prefs", Context.MODE_PRIVATE).getString("token", null)
+    }
+
+    @Composable
+    fun App() {
+        navController = rememberNavController()
+
+        NavHost(navController = navController, startDestination = if (token != null) Screen.Home.route else Screen.LogIn.route) {
+            composable(Screen.Home.route) {
+                HomeScreen(navController = navController)
+            }
+            composable(Screen.LogIn.route) {
+                LogInScreen(navController = navController)
+            }
+            composable(
+                route = Screen.Playlist.route,
+                arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val playlistId = backStackEntry.arguments?.getString("playlistId")
+                if (playlistId != null) {
+                    PlaylistScreen(playlistId = playlistId)
+                }
+            }
         }
     }
-}
 
-@Composable
-fun App(token: String?) {
-    val context = LocalContext.current
-    if (token != null) {
-        return Text(text = "Logged in!")
+    @Composable
+    fun PlaylistScreen(playlistId: String) {
+        Text(text = "Playlist screen for playlist w/ ID $playlistId")
     }
 
-    Button(onClick = { startAuth(context) }) {
-        Text(text = "Login with Spotify")
+    @Composable
+    fun HomeScreen(navController: NavController) {
+        LaunchedEffect(token) {
+            if (token == null) {
+                navController.navigate(Screen.LogIn.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+        }
+
+        Column {
+            Text(text = "Logged In! token: $token")
+            Button(onClick = {
+                deleteToken()
+            }) {
+                Text(text = "Log out")
+            }
+        }
+    }
+
+    @Composable
+    fun LogInScreen(navController: NavController) {
+        LaunchedEffect(token) {
+            if (token != null) {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.LogIn.route) { inclusive = true }
+                }
+            }
+        }
+
+        val context = LocalContext.current
+
+        Button(onClick = { startAuth(context) }) {
+            Text(text = "Login with Spotify")
+        }
     }
 }
 
 fun startAuth(context: Context) {
-    Log.i("MainActivity", "trying to go to url??");
-    println("trying to start context??")
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://10.0.2.2:3000/auth/login"))
     context.startActivity(intent)
-
 }
 
 fun handleDeepLink(intent: Intent?): String? {
@@ -101,4 +162,10 @@ fun handleDeepLink(intent: Intent?): String? {
         }
     }
     return null
+}
+
+sealed class Screen(val route: String) {
+    data object Home : Screen("home")
+    data object LogIn : Screen("login")
+    data object Playlist : Screen("playlist/{playlistId}")
 }
