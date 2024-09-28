@@ -20,6 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.rohangodha.synchronicity.ui.theme.SynchronicityTheme
 
 class MainActivity : ComponentActivity() {
@@ -73,13 +79,26 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun App(token: String?) {
-    val context = LocalContext.current
-    if (token != null) {
-        return Text(text = "Logged in!")
-    }
+    val navController = rememberNavController()
 
-    Button(onClick = { startAuth(context) }) {
-        Text(text = "Login with Spotify")
+    NavHost(navController = navController, startDestination = Screen.Home.route) {
+        composable(Screen.Home.route) {
+            HomeScreen(token = token, navController = navController)
+        }
+        composable(Screen.LogIn.route) {
+            LogInScreen()
+        }
+
+        composable(
+            route = Screen.Playlist.route,
+            arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val playlistId = backStackEntry.arguments?.getString("playlistId")
+            if (playlistId != null) {
+                PlaylistScreen(playlistId = playlistId)
+            }
+
+        }
     }
 }
 
@@ -101,4 +120,32 @@ fun handleDeepLink(intent: Intent?): String? {
         }
     }
     return null
+}
+
+@Composable
+fun PlaylistScreen(playlistId: String) {
+   Text(text = "Playlist screen for playlist w/ ID $playlistId")
+}
+
+@Composable
+fun HomeScreen(token: String?, navController: NavController) {
+    if (token == null) {
+        return navController.navigate("login")
+    }
+    Text(text = "Logged In! token: $token")
+}
+
+@Composable
+fun LogInScreen() {
+    val context = LocalContext.current
+
+    Button(onClick = { startAuth(context) }) {
+        Text(text = "Login with Spotify")
+    }
+}
+
+sealed class Screen(val route: String) {
+    data object Home : Screen("home")
+    data object LogIn : Screen("login")
+    data object Playlist : Screen("playlist/{playlistId}")
 }
