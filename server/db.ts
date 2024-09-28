@@ -25,9 +25,7 @@ process.on("SIGINT", async () => {
 const users = new mongoose.Schema({
   display_name: { type: String, required: true },
   spotify_id: { type: String, required: true },
-  spotify_token: { type: String, required: true },
   spotify_refresh_token: { type: String, required: true },
-  spotify_token_iat: { type: Date, required: true },
 });
 
 const playlists = new Schema({

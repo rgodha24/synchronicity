@@ -26,20 +26,23 @@ app.use(
 
 app.get("/authed/playlist", async (c) => {
   const payload = c.get("jwtPayload");
-  console.log(payload);
   const user = await Users.findOne({ _id: payload.id });
   if (!user) {
     return c.body(null, 400);
   }
 
+  const tokens = await spotify.refreshAccessToken(user.spotify_refresh_token);
+
   const API = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID!, {
-    access_token: user.spotify_token,
-    refresh_token: user.spotify_refresh_token,
-    expires_in: user.spotify_token_iat.getTime(),
+    access_token: tokens.accessToken,
+    refresh_token: tokens.refreshToken,
+    expires_in:
+      (tokens.accessTokenExpiresAt.getTime() - new Date().getTime()) * 1000,
     token_type: "Bearer",
   });
 
   const playlists = await API.playlists.getUsersPlaylists(user.spotify_id);
+  console.log(playlists);
   const playlistsItems = playlists.items;
   const playlist_fields: any[] = [];
   const songLinks = [];
@@ -135,7 +138,6 @@ app.get("/auth/callback", async (c) => {
       const token = await sign(
         {
           id: existingUser._id,
-          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365, // Token expires in 1y
         },
         process.env.JWT_SECRET!,
       );
@@ -157,7 +159,6 @@ app.get("/auth/callback", async (c) => {
     const token = await sign(
       {
         id: user._id,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365, // Token expires in 1y
       },
       process.env.JWT_SECRET!,
     );
