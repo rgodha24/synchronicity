@@ -32,6 +32,8 @@ const users = new mongoose.Schema({
 
 const playlists = new Schema({
   user: { type: Types.ObjectId, ref: "User", required: true },
+  name: { type: String, required: true },
+  imgUrl: { type: String, required: true },
 });
 
 const songs = new Schema({
