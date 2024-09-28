@@ -66,4 +66,13 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // this wavebeans thing's dependencies just KEEP GOING
+    implementation(libs.wavebeans.exe)
+    implementation(libs.wavebeans.lib)
+    implementation(libs.wavebeans.metrics)
+    implementation(libs.wavebeans.fs)
+    implementation(libs.kotlin.logging.jvm)
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlin.reflect)
 }

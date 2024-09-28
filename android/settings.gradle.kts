@@ -16,6 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            name = "Bintray WaveBeans"
+            url = uri("https://dl.bintray.com/wavebeans/wavebeans")
+        }
     }
 }
 
