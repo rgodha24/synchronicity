@@ -39,7 +39,7 @@ export const loader: LoaderFunction = async ({ request, context, params }) => {
     console.log(download);
     return download;
   };
-  
+
   const { playlistId } = params;
   const playlist = await Playlists.findById(playlistId);
   const ytmusic = new YTMusic()
@@ -53,12 +53,13 @@ export const loader: LoaderFunction = async ({ request, context, params }) => {
   let songNames: string[] = [];
   for (const song of playlist.trackList){
     const search = `${song.track.name} by ${song.track.artists.map((artist: { name: any; }) => artist.name).join(", ")}`;
-    const songs = await ytmusic.search(search)
+    const song1 = (await ytmusic.search(search)).filter(({type}) => type === "SONG" || type === "VIDEO")[0]
     const trackId = song.track.id;
-    console.log((await API.tracks.audioFeatures(trackId)).tempo);
-
-    songList.push(songs[0]);
+    //console.log((await API.tracks.audioFeatures(trackId)).tempo);
+    console.log(song1)
+    songList.push(song1);
     songNames.push(search);
+    console.log(await downloadVideo("https://music.youtube.com/watch?v="+song1.videoId))
     
   }
   //console.log(songList)
