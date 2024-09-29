@@ -43,7 +43,7 @@ export default function Index() {
     <div>
       choose playlist
       <p>
-        {playlists.map((playlist) => (
+        {playlists.map((playlist: any) => (
           <div key={playlist._id}>
             <a href={"/" + playlist._id}>{playlist.name}</a>
           </div>

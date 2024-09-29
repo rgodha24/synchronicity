@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Schema, model, Types } from "mongoose";
+import { spotify } from "./auth";
 
 process.on("SIGINT", async () => {
   console.log("ctrl-c detected, disconnecting from mongoose...");
@@ -35,6 +36,7 @@ const playlists = new Schema({
   user: { type: String, ref: "User", required: true },
   name: { type: String, required: true },
   imgUrl: { type: String, required: true },
+  trackList: {type: Object, required: true}
 });
 
 const songs = new Schema({

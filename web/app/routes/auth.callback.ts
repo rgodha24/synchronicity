@@ -14,8 +14,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     request.headers.get("Cookie") || ""
   );
 
-  console.log("code", code);
-  console.log("state", state);
 
   if (!code || !state || !storedState || state !== storedState) {
     return new Response("Invalid state or code", { status: 400 });
@@ -77,14 +75,15 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         playlist.images && playlist.images.length > 0 && playlist.images[0].url
           ? playlist.images[0].url
           : "filler";
-
+      const trackList = await API.playlists.getPlaylistItems(playlist.id)
       const p = await Playlists.create({
         user: user._id,
         name: playlist.name,
         imgUrl: imgUrl,
+        trackList: trackList
+
       });
 
-      console.log(p);
     }
 
     const session = await lucia.createSession(user._id, {});
