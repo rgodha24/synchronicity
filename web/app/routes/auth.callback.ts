@@ -1,15 +1,15 @@
 import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { stateCookie } from "./auth.login";
 import { lucia, spotify } from "~/auth";
-import { connectToMongo, Users } from "~/db";
+import { Users } from "~/db";
 import { OAuth2RequestError } from "arctic";
 import { nanoid } from "nanoid";
+import { connectToMongo } from "~/dbdb";
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const code = new URLSearchParams(request.url.split("?")[1]).get("code");
   const state = new URLSearchParams(request.url.split("?")[1]).get("state");
   const storedState = await stateCookie.parse(request.headers.get("Cookie") || "");
-  await connectToMongo();
 
   console.log("code", code);
   console.log("state", state);
@@ -17,6 +17,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   if (!code || !state || !storedState || state !== storedState) {
     return new Response("Invalid state or code", { status: 400 });
   }
+  await connectToMongo();
 
   try {
     const tokens = await spotify.validateAuthorizationCode(code);

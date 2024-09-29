@@ -1,21 +1,6 @@
 import mongoose from "mongoose";
 import { Schema, model, Types } from "mongoose";
 
-let db: mongoose.Connection;
-
-export async function connectToMongo() {
-  console.log(process.env.MONGO_CONNECTION!);
-  await mongoose.connect(process.env.MONGO_CONNECTION!, {
-    serverApi: { version: "1", strict: true, deprecationErrors: true },
-  });
-  db = mongoose.connection;
-
-  db.on("error", console.error.bind(console, "MongoDB connection error:"));
-  db.once("open", () => {
-    console.log("Connected to MongoDB");
-  });
-}
-
 process.on("SIGINT", async () => {
   console.log("ctrl-c detected, disconnecting from mongoose...");
   await mongoose.disconnect();
@@ -48,6 +33,8 @@ const session = new Schema(
 
 const playlists = new Schema({
   user: { type: Types.ObjectId, ref: "User", required: true },
+  name: { type: String, required: true },
+  imgUrl: { type: String, required: true },
 });
 
 const songs = new Schema({
