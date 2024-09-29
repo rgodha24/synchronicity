@@ -10,7 +10,9 @@ import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const code = new URLSearchParams(request.url.split("?")[1]).get("code");
   const state = new URLSearchParams(request.url.split("?")[1]).get("state");
-  const storedState = await stateCookie.parse(request.headers.get("Cookie") || "");
+  const storedState = await stateCookie.parse(
+    request.headers.get("Cookie") || ""
+  );
 
   console.log("code", code);
   console.log("state", state);
@@ -70,14 +72,19 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     const playlists = await API.playlists.getUsersPlaylists(user.spotify_id);
     console.log(playlists.total);
 
-    
-    for (const playlist of playlists.items){
-      const imgUrl = playlist.images && playlist.images.length > 0 && playlist.images[0].url ? playlist.images[0].url : "filler";
+    for (const playlist of playlists.items) {
+      const imgUrl =
+        playlist.images && playlist.images.length > 0 && playlist.images[0].url
+          ? playlist.images[0].url
+          : "filler";
+
       const p = await Playlists.create({
         user: user._id,
         name: playlist.name,
-        imgUrl: imgUrl 
+        imgUrl: imgUrl,
       });
+
+      console.log(p);
     }
 
     const session = await lucia.createSession(user._id, {});
@@ -88,7 +95,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       },
     });
   } catch (e) {
-    if (e instanceof OAuth2RequestError && e.message === "bad_verification_code") {
+    if (
+      e instanceof OAuth2RequestError &&
+      e.message === "bad_verification_code"
+    ) {
       // invalid code
       return new Response("Invalid code", { status: 400 });
     }

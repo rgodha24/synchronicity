@@ -32,7 +32,7 @@ const session = new Schema(
 );
 
 const playlists = new Schema({
-  user: { type: Types.ObjectId, ref: "User", required: true },
+  user: { type: String, ref: "User", required: true },
   name: { type: String, required: true },
   imgUrl: { type: String, required: true },
 });
