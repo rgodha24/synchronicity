@@ -1,10 +1,11 @@
 import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { stateCookie } from "./auth.login";
 import { lucia, spotify } from "~/auth";
-import { Users } from "~/db";
+import { Playlists, Users } from "~/db";
 import { OAuth2RequestError } from "arctic";
 import { nanoid } from "nanoid";
 import { connectToMongo } from "~/dbdb";
+import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const code = new URLSearchParams(request.url.split("?")[1]).get("code");
@@ -57,6 +58,27 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       spotify_token_iat: tokens.accessTokenExpiresAt,
       _id: nanoid(),
     });
+
+    const API = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID!, {
+      access_token: user.spotify_token,
+      refresh_token: user.spotify_refresh_token,
+      expires_in:
+        (user.spotify_token_iat.getTime() - new Date().getTime()) * 1000,
+      token_type: "Bearer",
+    });
+
+    const playlists = await API.playlists.getUsersPlaylists(user.spotify_id);
+    console.log(playlists.total);
+
+    
+    for (const playlist of playlists.items){
+      const imgUrl = playlist.images && playlist.images.length > 0 && playlist.images[0].url ? playlist.images[0].url : "filler";
+      const p = await Playlists.create({
+        user: user._id,
+        name: playlist.name,
+        imgUrl: imgUrl 
+      });
+    }
 
     const session = await lucia.createSession(user._id, {});
     const cookie = lucia.createSessionCookie(session.id);
