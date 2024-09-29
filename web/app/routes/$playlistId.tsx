@@ -14,12 +14,12 @@ export const loader: LoaderFunction = async ({ request, context, params }) => {
   );
   await connectToMongo();
   if (!sessionId) {
-    return redirect("/auth/login");
+    return redirect("/login");
   }
   const result = await lucia.validateSession(sessionId);
 
   if (!result) {
-    return redirect("/auth/login");
+    return redirect("/login");
   }
 
   return null;

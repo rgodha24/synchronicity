@@ -22,12 +22,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   );
   await connectToMongo();
   if (!sessionId) {
-    return redirect("/auth/login");
+    return redirect("/login");
   }
   const result = await lucia.validateSession(sessionId);
 
   if (!result) {
-    return redirect("/auth/login");
+    return redirect("/login");
   }
 
   const playlists = (await Playlists.find({ user: result.user?.id })).map((p) =>

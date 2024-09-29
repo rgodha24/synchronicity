@@ -1,0 +1,43 @@
+body {
+  background-color: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  flex-direction: column;
+}
+.logo {
+  width: 150px;
+  margin-bottom: 20px;
+}
+.title {
+  font-size: 2em;
+  margin: 10px 0;
+}
+.subtitle {
+  font-size: 1em;
+  margin-bottom: 30px;
+  color: #b3b3b3;
+}
+.spotify-button {
+  display: flex;
+  align-items: center;
+  background-color: #218c7c;
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 50px;
+  font-size: 1em;
+  margin-top: 20px;
+}
+.spotify-button img {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+}
+.spotify-button:hover {
+  background-color: #1aa34a;
+}
