@@ -22,33 +22,32 @@ export const loader: LoaderFunction = async ({ request, context, params }) => {
     return redirect("/auth/login");
   }
 
-  const { playlistId } = params;
-  const playlist = await Playlists.findById(playlistId);
-  const ytmusic = new YTMusic();
-  await ytmusic.initialize(/* Optional: Custom cookies */);
-  if (!playlist) {
-    return new Response("not found", {
-      status: 404,
-    });
-  }
-  let songList: any[] = [];
-  let songNames: string[] = [];
-  for (const song of playlist.trackList.items) {
-    const search = `${song.track.name} by ${song.track.artists
-      .map((artist: { name: any }) => artist.name)
-      .join(", ")}`;
+  return null;
 
-    songNames.push(search);
-  }
-  return { playlist: playlist.toObject(), songs: songList, songNames };
+  // const { playlistId } = params;
+  // const playlist = await Playlists.findById(playlistId);
+  // const ytmusic = new YTMusic();
+  // await ytmusic.initialize(/* Optional: Custom cookies */);
+  // if (!playlist) {
+  //   return new Response("not found", {
+  //     status: 404,
+  //   });
+  // }
+  // let songList: any[] = [];
+  // let songNames: string[] = [];
+  // for (const song of playlist.trackList.items) {
+  //   const search = `${song.track.name} by ${song.track.artists
+  //     .map((artist: { name: any }) => artist.name)
+  //     .join(", ")}`;
+  //
+  //   songNames.push(search);
+  // }
+  // return { playlist: playlist.toObject(), songs: songList, songNames };
 };
 
 export default function PlaylistPage() {
-  const { playlist, songs, songNames } = useLoaderData<typeof loader>();
-
   return (
     <div>
-      {JSON.stringify(playlist)}
       <Motion />
     </div>
   );
