@@ -33,7 +33,7 @@ export const loader: LoaderFunction = async ({ request, context, params }) => {
   }
   let songList: any[] = [];
   let songNames: string[] = [];
-  for (const song of playlist.trackList) {
+  for (const song of playlist.trackList.items) {
     const search = `${song.track.name} by ${song.track.artists
       .map((artist: { name: any }) => artist.name)
       .join(", ")}`;

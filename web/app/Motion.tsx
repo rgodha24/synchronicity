@@ -49,7 +49,7 @@ const Motion = () => {
 
       const domFreak = both[1].frequency / 2;
 
-      const res = findClosestResonance(131, domFreak * 60);
+      const res = findClosestResonance(124, domFreak * 60);
       audioRef.current!.playbackRate = res;
     }, 100);
 
@@ -65,7 +65,7 @@ const Motion = () => {
     <div>
       <h2>Accelerometer FFT</h2>
       <p>Buffer Size: {buffer.length}</p>
-      <audio src="/magnetic.mp3" ref={audioRef} />
+      <audio src="/clown.mp3" ref={audioRef} />
       <button
         className="p-8 bg-black text-white"
         onClick={() => audioRef.current?.play()}
