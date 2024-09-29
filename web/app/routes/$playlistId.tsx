@@ -6,6 +6,7 @@ import { Playlists } from "~/db";
 import { connectToMongo } from "~/dbdb";
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import YTMusic from "ytmusic-api"
+import Motion from "~/Motion";
 
 export const loader: LoaderFunction = async ({ request, context, params }) => {
   const sessionId = parseCookies(request.headers.get("Cookie") || "").get(
@@ -68,9 +69,10 @@ export const loader: LoaderFunction = async ({ request, context, params }) => {
 export default function PlaylistPage() {
   const { playlist, songs,songNames } = useLoaderData<typeof loader>();
 
-  return <div>
-    choose song
-    <p>{songNames.map((songNames: any)=>(<div>
-      {songNames}<a href=""></a></div>))} </p>
-    </div>;
+  return (
+    <div>
+      {JSON.stringify(playlist)}
+      <Motion />
+    </div>
+  );
 }
