@@ -172,6 +172,7 @@ app.get("/auth/callback", async (c) => {
     for (const playlist of playlists.items){
       const p = new Playlists({user: user._id, name: playlist.name, imgUrl: playlist.images[0]});
       await p.save();
+      console.log();
     }
 
     const token = await sign(
