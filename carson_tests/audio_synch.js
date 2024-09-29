@@ -30,8 +30,10 @@ var buffer = [];
 var fftRate = 5;
 //Countdown to fft analysis
 var fftCount = 1;
-//Dominant frequency
-var domFreq = 1;
+//Song tempo (beats per second)
+var tempo = 1;
+//Tempo offset (how much music tempo should be offset from motion tempo)
+var tempoOffset = 0;
 
 function argMax(data) {
     max = data[0];
@@ -62,8 +64,9 @@ function fftAnalysis(data, sampleRate) {
 
     console.log(both);
 
-    domFreq = frequencies[argMax(magnitudes)];
+    var domFreq = frequencies[argMax(magnitudes)];
     console.log(domFreq);
+    return domFreq;
 }
 
 function updateBuffer(accel) {
@@ -76,20 +79,43 @@ function updateBuffer(accel) {
     //Checks to see if fft analysis can be performed
     fftCount--;
     if (buffer.length == bufferSize && fftCount == 0) {
-        fftAnalysis(buffer, sampleFreq)
+        var domFreq = fftAnalysis(buffer, sampleFreq)
 
         //Resets fft countdown
         fftCount = fftRate;
+
+        //Sets music playback rate based on tempo and motion resonance
+        audioElement.playbackRate = findClosestResonance(tempo, domFreq+tempoOffset)
     }
 }
 
-//Audio player
-const audioContext = new AudioContext();
+function findClosestResonance(tempo, target) {
+    const resonanceRange = [1/3, 1/2, 1, 2, 3];
+    const ratio = target/tempo;
+    
+    function score(resonance) {
+        return Math.abs(1-ratio*resonance);
+    }
+    var closest = score(resonanceRange[0]);
+    var loc = 0;
+    for (i = 0; i < resonanceRange.length; i++) {
+        if (score(resonanceRange[i]) < closest) {
+            closest = score(resonanceRange[i]);
+            loc = i;
+        }
+    }
 
-//Passes audio element to context
+    var final = ratio*resonanceRange[loc];
+    if (final < 0.5) {
+        final = 0.5;
+    } else if (final > 2) {
+        final = 2;
+    }
+    return final;
+}
+
+//Gets audio element
 const audioElement = document.getElementById("audio");
-
-const track = audioContext.createMediaElementSource(audioElement);
 
 // Play/pause functionality
 const playButton = document.getElementById("button");
@@ -122,8 +148,3 @@ audioElement.addEventListener(
     },
     false,
   );
-
-// Adds speed control functionality
-const bufferNode = audioContext.createBufferSource();
-
-track.connect(audioContext.destination);
