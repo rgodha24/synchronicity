@@ -1,37 +1,22 @@
 //Acceleromter initialization
-var sampleFreq = 60;
 
-let accel = null;
-try {
-  accel = new Accelerometer({ referenceFrame: "device", frequency: sampleFreq});
-  accel.addEventListener("error", (event) => {
-    // Handle runtime errors.
-    if (event.error.name === "NotAllowedError") {
-      // Branch to code for requesting permission.
-    } else if (event.error.name === "NotReadableError") {
-      console.log("Cannot connect to the sensor.");
-    }
-  });
-
-  accel.addEventListener("reading", () => {
-    console.log(`Acceleration along the X-axis ${accel.x}`);
-    console.log(`Acceleration along the Y-axis ${accel.y}`);
-    console.log(`Acceleration along the Z-axis ${accel.z}`);
-    updateBuffer(accel)
-  });
-  
-  accel.start();
-} catch (error) {
-  // Handle construction errors.
-  if (error.name === "SecurityError") {
-    // See the note above about permissions policy.
-    console.log("Sensor construction was blocked by a permissions policy.");
-  } else if (error.name === "ReferenceError") {
-    console.log("Sensor is not supported by the User Agent.");
-  } else {
-    throw error;
-  }
+// Request permission for iOS 13+ devices
+if (DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function") {
+    DeviceMotionEvent.requestPermission();
 }
+
+window.addEventListener("devicemotion", handleMotion);
+
+var sampleFreq = 1;
+
+function handleMotion(event) {
+    //Updates acceleration data buffer
+    updateBuffer(event.acceleration);
+
+    //Updates sample frequency
+    sampleFreq = 1000./event.interval
+}
+
 
 //FFT analysis
 
@@ -142,4 +127,3 @@ audioElement.addEventListener(
 const bufferNode = audioContext.createBufferSource();
 
 track.connect(audioContext.destination);
-
