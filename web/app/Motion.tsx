@@ -9,8 +9,7 @@ interface Acceleration {
   z: number;
 }
 
-const buffer = new Float64Array(256);
-let bufferI = 0;
+const buffer = new Array(128).fill(0).map((_) => 0);
 
 const Motion = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -31,8 +30,8 @@ const Motion = () => {
           Math.pow(accel.y || 0, 2) +
           Math.pow(accel.z || 0, 2);
 
-        buffer[(bufferI + buffer.length) % buffer.length] = magnitude;
-        bufferI++;
+        buffer.shift();
+        buffer.push(magnitude);
       }
     };
 
@@ -93,8 +92,8 @@ function findClosestResonance(tempo: number, target: number) {
   }
 
   var final = ratio * resonanceRange[loc];
-  if (final < 0.75) {
-    final = 0.75;
+  if (final < 0.5) {
+    final = 0.5;
   } else if (final > 2) {
     final = 2;
   }
